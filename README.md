@@ -78,4 +78,4 @@ cargo build --target aarch64-linux-android --release
 ## TODO
 
 - support 32bit so
-
+- JNI support
