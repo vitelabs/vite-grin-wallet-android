@@ -24,6 +24,7 @@ apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncurs
 ```
 git clone https://github.com/vitelabs/Vite_GrinWallet-android.git
 cd Vite_GrinWallet-android
+cd rust
 cargo build --target aarch64-linux-android --release
 ```
 
