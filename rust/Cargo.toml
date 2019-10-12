@@ -1,0 +1,71 @@
+[package]
+name = "vite_grin_wallet"
+version = "0.1.0"
+authors = ["xirtam-zhang <xirtam.zhang@gmail.com>"]
+description = "Grin mobile lib"
+publish = false
+edition = "2018"
+
+[dependencies]
+
+clap = { version = "2.31", features = ["yaml"] }
+rpassword = "2.0.0"
+ctrlc = { version = "3.1", features = ["termination"] }
+failure = "0.1"
+failure_derive = "0.1"
+prettytable-rs = "0.7"
+log = "0.4"
+uuid = "0.7.4"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_derive = "1"
+
+#libc = "0.2.45"
+#blake2-rfc = "0.2"
+#chrono = "0.4.4"
+#cursive = "0.9.0"
+#humansize = "1.1.0"
+#daemonize = "0.3"
+#term = "0.5"
+
+#c60301946ffd819e5728958c5e1964348ae469a5 3.0
+#c12f61d1543539167abc8acb595229ad7d238487 2.0
+#64e8c48c35f13aaafe0a8e4eb51d82efe0311f2a 2.0 another
+grin_wallet_api = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+grin_wallet_impls = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+grin_wallet_libwallet = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+grin_wallet_config = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+grin_wallet_util = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+
+[build-dependencies]
+built = "0.3"
+reqwest = "0.9"
+flate2 = "1.0"
+tar = "0.4"
+cbindgen = "0.8.3"
+
+[grin_pool.serde]
+version = "1.0.93"
+
+[grin_pool.serde_derive]
+version = "1.0.93"
+
+[lib]
+name = "wallet"
+crate-type = ["cdylib"]
+
+[patch.crates-io]
+#croaring = { path = "./croaring-rs", version = "0.3.9" }
+lmdb-zero = { path = "./lmdb-zero", version = "0.4.4" }
+lmdb-sys = { path = "./lmdb-rs-master/lmdb-sys", version = "0.8.0" }
+serde = { git = "https://github.com/serde-rs/serde",version="1.0.93" }
+grin_pool = { path = "./grin/pool", version = "2.0.0" }
+grin_core = { path = "./grin/core", version = "2.0.0" }
+grin_api = { path = "./grin/api", version = "2.0.0" }
+#grin_wallet_impls = { path = "./grin/api", version = "2.0.0" }
+grin_keychain = { path = "./grin/keychain", version = "2.0.0" }
+grin_chain = { path = "./grin/chain", version = "2.0.0" }
+#grin_pool = {git = "https://github.com/mimblewimble/grin/pool",rec = "8f3be49dfa152322c228352c1f34447328ac84d9"}
+
+

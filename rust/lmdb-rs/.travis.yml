@@ -1,0 +1,17 @@
+language: rust
+sudo: false
+rust:
+  - nightly
+  - beta
+  - stable
+
+env:
+  global:
+    - secure: C6dtZjIXukGFq+dV0/w6INZX1dps6kDfONDzubEqT+0UjsrGgXSugBNspuDE4kTv8yJ9qFNv/69LfvjuYpERRaJZuv66nS2MDpBWugXwZ/4mdsaBfho/Zhuajl4ff4Dn0hvYs9olrZpJK6L/byTLd1w4ugw77ngTyc+rwR+rB4U=
+    - secure: C770POllPujSfOExiD3xqXlJkhKPM3G9rkzEfQZtAFhR6RcfI893mAqEGmq2IyGz2IoZs48qmBuukt4d9mLwdSAEEOCMJ0pgjYwqPMRa70rvnxZw+JFGZbkmZjgA62JWIOvk2OX7+DXECFxMVO9abYPohToNyjmkz1Tw1jz6/98=
+
+script:
+    - cargo test --verbose && cargo doc --verbose --no-deps
+
+after_script:
+  - ./up_doc.sh

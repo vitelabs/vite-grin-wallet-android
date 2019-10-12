@@ -1,0 +1,37 @@
+[package]
+name = "lmdb-zero"
+version = "0.4.4"
+authors = ["FullContact, Inc", "Jason Lingle"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/AltSysrq/lmdb-zero"
+documentation = "https://docs.rs/lmdb-zero"
+keywords = ["lmdb", "zero-copy", "btree"]
+categories = ["database"]
+
+description = """
+An almost-safe, near-zero-cost, feature-complete, unabashedly non-abstract
+wrapper around LMDB.
+"""
+
+[badges]
+travis-ci = { repository = "AltSysrq/lmdb-zero" }
+
+[dependencies]
+liblmdb-sys = { path = "../lmdb-rs/liblmdb-sys", version = "0.2.2" }
+bitflags = "0.9.1"
+libc = "0.2.26"
+supercow = "0.1.0"
+gcc = "0.3.39"
+rand = "0.3.15"
+
+[dev-dependencies]
+tempdir = "=0.3.4"
+
+
+# These are redundant / not directly used dependencies which increased the
+# required rust version in a minor version bump. Pinning them like this is
+# necessary to test on Rust 1.12.0.
+#libc = "=0.2.18"
+#gcc = "=0.3.39"
+#rand = "=0.3.15"
