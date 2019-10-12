@@ -5,15 +5,16 @@
 * Ubuntu 18
 * rust 1.34+ (use [rustup]((https://www.rustup.rs/))- i.e. `curl https://sh.rustup.rs -sSf | sh; source $HOME/.cargo/env`)
   * if rust is already installed, you can simply update version with `rustup update`
-* clang
-* ncurses and libs (ncurses, ncursesw5)
-* zlib libs (zlib1g-dev or zlib-devel)
-* pkg-config
-* libssl-dev
-* linux-headers (reported needed on Alpine linux)
-* llvm
+* NDK20
 
-For Debian-based distributions (Debian, Ubuntu, Mint, etc), all in one line (except Rust):
+```
+export RUST_BACKTRACE=full
+export PATH=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+```
+
+```
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
+```
 
 ```sh
 apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncursesw5-dev zlib1g-dev pkg-config libssl-dev llvm
