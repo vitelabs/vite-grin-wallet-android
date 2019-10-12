@@ -74,3 +74,8 @@ cargo build --target aarch64-linux-android --release
 - https://github.com/vitelabs/Vite_GrinWallet
 - https://github.com/mimblewimble/grin
 - https://github.com/mimblewimble/grin-wallet
+
+## TODO
+
+- support 32bit so
+
