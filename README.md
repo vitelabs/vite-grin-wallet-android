@@ -29,7 +29,7 @@ cargo build --target aarch64-linux-android --release
 ```
 
 ## Thanks
-https://github.com/cyclefortytwo/ironbelly
-https://github.com/vitelabs/Vite_GrinWallet
-https://github.com/mimblewimble/grin
-https://github.com/mimblewimble/grin-wallet
+- https://github.com/cyclefortytwo/ironbelly
+- https://github.com/vitelabs/Vite_GrinWallet
+- https://github.com/mimblewimble/grin
+- https://github.com/mimblewimble/grin-wallet
