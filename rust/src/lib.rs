@@ -14,6 +14,13 @@
 
 
 // This code is mostly based on Ivan Sorokin's work in IronBelly(https://github.com/cyclefortytwo/ironbelly/blob/master/rust/src/lib.rs). Original copyright has been retained.
+#![cfg(target_os = "android")]
+#![allow(non_snake_case)]
+
+use std::ffi::{CString, CStr};
+use jni::JNIEnv;
+use jni::objects::{JObject, JString, JClass};
+use jni::sys::jstring;
 
 use grin_wallet_libwallet::{slate_versions, InitTxArgs, NodeClient, WalletInst};
 use grin_wallet_util::grin_core::global::ChainTypes;
@@ -30,7 +37,6 @@ use grin_wallet_impls::{
 use grin_wallet_api::{Foreign, Owner};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -132,8 +138,7 @@ macro_rules! unwrap_to_c (
         }
         Err(e) => {
             *$error = 1;
-            CString::new(
-                serde_json::to_string(&format!("{}",e)).unwrap()).unwrap().into_raw()
+            CString::new(serde_json::to_string(&format!("{}",e)).unwrap()).unwrap().into_raw()
         }
     }
 ));
@@ -317,7 +322,7 @@ fn outputs_get(
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone());
-    let outputs = api.retrieve_outputs(true,refresh_from_node, None)?;
+    let outputs = api.retrieve_outputs(true, refresh_from_node, None)?;
     Ok(serde_json::to_string(&outputs).unwrap())
 }
 
@@ -355,7 +360,7 @@ fn output_get(
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone());
-    let outputs = api.retrieve_outputs(true,refresh_from_node, Some(tx_id))?;
+    let outputs = api.retrieve_outputs(true, refresh_from_node, Some(tx_id))?;
     Ok(serde_json::to_string(&outputs).unwrap())
 }
 
@@ -539,7 +544,7 @@ fn tx_create(
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let mut api = Owner::new(wallet.clone());
-     let args = InitTxArgs {
+    let args = InitTxArgs {
         src_acct_name: None,
         amount: amount,
         minimum_confirmations: 10,
@@ -558,7 +563,7 @@ fn tx_create(
             slate.clone(),
             slate_versions::SlateVersion::V2,
         ))
-        .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
+            .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
     )
 }
 
@@ -636,7 +641,7 @@ fn tx_receive(
     message: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Foreign::new(wallet.clone(),None);
+    let mut api = Foreign::new(wallet.clone(), None);
     let adapter = FileWalletCommAdapter::new();
     let mut slate = adapter.receive_tx_async(&slate_path)?;
     api.verify_slate_messages(&slate)?;
@@ -682,14 +687,14 @@ fn tx_finalize(
     let adapter = FileWalletCommAdapter::new();
     let s = adapter.receive_tx_async(&slate_path)?;
     api.verify_slate_messages(&s)?;
-    match api.finalize_tx(&s){
+    match api.finalize_tx(&s) {
         Ok(mut slate) => {
             Ok(
                 serde_json::to_string(&slate_versions::VersionedSlate::into_version(
                     slate.clone(),
                     slate_versions::SlateVersion::V2,
                 ))
-                .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
+                    .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
             )
         }
         Err(e) => {
@@ -750,23 +755,22 @@ fn tx_send_http(
     let slate = api.init_send_tx(args)?;
     api.tx_lock_outputs(&slate, 0)?;
     match adapter.send_tx_sync(dest, &slate) {
-                Ok(mut s) => {
-                    api.verify_slate_messages(&s)?;
-                    match api.finalize_tx(&s){
-                        Ok(mut slate) => {
-                            Ok(
-                                serde_json::to_string(&slate_versions::VersionedSlate::into_version(
-                                    slate.clone(),
-                                    slate_versions::SlateVersion::V2,
-                                ))
-                                .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
-                            )
-                        }
-                        Err(e) => {
-                            Err(Error::from(e))
-                        }
+        Ok(mut s) => {
+            api.verify_slate_messages(&s)?;
+            match api.finalize_tx(&s) {
+                Ok(mut slate) => {
+                    Ok(
+                        serde_json::to_string(&slate_versions::VersionedSlate::into_version(
+                            slate.clone(),
+                            slate_versions::SlateVersion::V2,
+                        ))
+                            .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
+                    )
+                }
+                Err(e) => {
+                    Err(Error::from(e))
+                }
             }
-            
         }
         Err(e) => {
             api.cancel_tx(None, Some(slate.id))?;
@@ -933,8 +937,64 @@ pub unsafe extern "C" fn grin_wallet_check(
     )
 }
 
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_hello(
+    env: JNIEnv, _: JObject, j_recipient: JString) -> jstring {
+    let recipient = CString::from(
+        CStr::from_ptr(
+            env.get_string(j_recipient).unwrap().as_ptr()
+        )
+    );
+    let output = env.new_string("hello".to_owned() + recipient.to_str().unwrap()).unwrap();
+    output.into_inner()
+}
 
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_grin_1wallet_1init(env: JNIEnv, _: JObject, j_recipient: JString, j_chain_type: JString, j_password: JString, j_check_node_api_http_addr: JString) -> jstring {
+    let recipient = CString::from(
+        CStr::from_ptr(
+            env.get_string(j_recipient).unwrap().as_ptr()
+        )
+    );
+    let chain_type = CString::from(
+        CStr::from_ptr(
+            env.get_string(j_chain_type).unwrap().as_ptr()
+        )
+    );
+    let password = CString::from(
+        CStr::from_ptr(
+            env.get_string(j_password).unwrap().as_ptr()
+        )
+    );
+    let check_node_api_http_addr = CString::from(
+        CStr::from_ptr(
+            env.get_string(j_check_node_api_http_addr).unwrap().as_ptr()
+        )
+    );
 
+    let mut error: u8 = 0;
+    let mut result: String;
+    //unwrap_to_c!(
+    let output = wallet_init(
+        &c_str_to_rust(recipient.as_ptr()),
+        &c_str_to_rust(chain_type.as_ptr()),
+        &c_str_to_rust(password.as_ptr()),
+        &c_str_to_rust(check_node_api_http_addr.as_ptr()),
+    );
+    //,&error
+    //);
 
-
-
+    match output {
+        Ok(v) => {
+            println!("xirtam ok: {:?}", v);
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            println!("xirtam error: {:?}", e);
+            error = 1;
+            result = e.to_string();
+        }
+    }
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}

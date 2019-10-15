@@ -37,6 +37,10 @@ grin_wallet_impls = { git = "https://github.com/mimblewimble/grin-wallet", rev =
 grin_wallet_libwallet = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
 grin_wallet_config = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
 grin_wallet_util = { git = "https://github.com/mimblewimble/grin-wallet", rev = "c12f61d1543539167abc8acb595229ad7d238487" }
+jni = { version = "0.10.2", default-features = false }
+
+[profile.release]
+lto = true
 
 [build-dependencies]
 built = "0.3"
