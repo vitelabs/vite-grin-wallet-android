@@ -22,6 +22,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JString, JClass};
 use jni::sys::jstring;
 use jni::sys::jboolean;
+use jni::sys::jlong;
 
 use grin_wallet_libwallet::{slate_versions, InitTxArgs, NodeClient, WalletInst};
 use grin_wallet_util::grin_core::global::ChainTypes;
@@ -544,7 +545,11 @@ fn tx_create(
         estimate_only: Some(false),
         send_args: None,
     };
-    let slate = api.init_send_tx(args).unwrap();
+    let slate = match api.init_send_tx(args) {
+        Ok(v) => v,
+        Err(e) => return Err(Error::from(e)),
+    };
+
     api.tx_lock_outputs(&slate, 0)?;
     Ok(
         serde_json::to_string(&slate_versions::VersionedSlate::into_version(
@@ -1103,7 +1108,6 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_balance(
     password: JString,
     check_node_api_http_addr: JString,
     refresh_from_node: jboolean) -> jstring {
-    println!("xirtam rust balance");
     let mut error: u8 = 0;
     let mut result: String;
 
@@ -1114,6 +1118,46 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_balance(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
         refresh_from_node == 1,
+    );
+
+    println!("xirtam rust balance {:?}", refresh_from_node == 1);
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txCreate(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    message: JString,
+    amount: jlong,
+    selection_strategy_is_use_all: jboolean) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txCreate");
+    let output = tx_create(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(message).unwrap().as_ptr())).as_ptr()),
+        amount as u64,
+        selection_strategy_is_use_all == 1,
     );
 
     match output {
