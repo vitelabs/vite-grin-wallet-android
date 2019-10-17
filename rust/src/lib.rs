@@ -21,6 +21,7 @@ use std::ffi::{CString, CStr};
 use jni::JNIEnv;
 use jni::objects::{JObject, JString, JClass};
 use jni::sys::jstring;
+use jni::sys::jboolean;
 
 use grin_wallet_libwallet::{slate_versions, InitTxArgs, NodeClient, WalletInst};
 use grin_wallet_util::grin_core::global::ChainTypes;
@@ -80,7 +81,7 @@ pub fn get_wallet_config(wallet_dir: &str, chain_type: &str, check_node_api_http
     };
     WalletConfig {
         chain_type: Some(chain_type_config),
-        api_listen_interface: "127.0.0.1".to_string(),
+        api_listen_interface: "0.0.0.0".to_string(),
         api_listen_port: 13415,
         api_secret_path: Some(".api_secret".to_string()),
         node_api_secret_path: Some(wallet_dir.to_owned() + "/.api_secret"),
@@ -143,25 +144,6 @@ macro_rules! unwrap_to_c (
     }
 ));
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_init(
-    path: *const c_char,
-    chain_type: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_init(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-        ),
-        error
-    )
-}
-
 fn wallet_recovery(
     path: &str,
     chain_type: &str,
@@ -172,12 +154,18 @@ fn wallet_recovery(
     let wallet_config = get_wallet_config(path, chain_type, check_node_api_http_addr);
     let node_api_secret = get_first_line(wallet_config.node_api_secret_path.clone());
     let _res = WalletSeed::recover_from_phrase(&wallet_config, &phrase, &password)?;
+
     let node_client = HTTPNodeClient::new(&wallet_config.check_node_api_http_addr, node_api_secret);
     let wallet = instantiate_wallet(wallet_config.clone(), node_client, password, "default")?;
     let mut api = Owner::new(wallet.clone());
+
     match api.restore() {
-        Ok(_) => Ok("".to_owned()),
-        Err(e) => Err(Error::from(e)),
+        Ok(_) => {
+            Ok("".to_owned())
+        }
+        Err(e) => {
+            Err(Error::from(e))
+        }
     }
 }
 
@@ -950,51 +938,194 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_hello(
 }
 
 #[no_mangle]
-pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_grin_1wallet_1init(env: JNIEnv, _: JObject, j_recipient: JString, j_chain_type: JString, j_password: JString, j_check_node_api_http_addr: JString) -> jstring {
-    let recipient = CString::from(
-        CStr::from_ptr(
-            env.get_string(j_recipient).unwrap().as_ptr()
-        )
-    );
-    let chain_type = CString::from(
-        CStr::from_ptr(
-            env.get_string(j_chain_type).unwrap().as_ptr()
-        )
-    );
-    let password = CString::from(
-        CStr::from_ptr(
-            env.get_string(j_password).unwrap().as_ptr()
-        )
-    );
-    let check_node_api_http_addr = CString::from(
-        CStr::from_ptr(
-            env.get_string(j_check_node_api_http_addr).unwrap().as_ptr()
-        )
-    );
-
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletInit(env: JNIEnv, _: JObject, j_recipient: JString, j_chain_type: JString, j_password: JString, j_check_node_api_http_addr: JString) -> jstring {
+    println!("xirtam rust walletInit");
     let mut error: u8 = 0;
     let mut result: String;
-    //unwrap_to_c!(
     let output = wallet_init(
-        &c_str_to_rust(recipient.as_ptr()),
-        &c_str_to_rust(chain_type.as_ptr()),
-        &c_str_to_rust(password.as_ptr()),
-        &c_str_to_rust(check_node_api_http_addr.as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_recipient).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
     );
-    //,&error
-    //);
 
     match output {
         Ok(v) => {
-            println!("xirtam ok: {:?}", v);
             error = 0;
             result = v.to_string();
         }
         Err(e) => {
-            println!("xirtam error: {:?}", e);
             error = 1;
             result = e.to_string();
         }
     }
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletPhrase(
+    env: JNIEnv, _: JObject, j_path: JString,
+    j_chain_type: JString,
+    j_password: JString,
+    j_check_node_api_http_addr: JString, ) -> jstring {
+    println!("xirtam rust walletPhrase");
+    let mut error: u8 = 0;
+    let mut result: String;
+    let output = wallet_phrase(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRecovery(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    phrase: JString,
+    password: JString,
+    check_node_api_http_addr: JString, ) -> jstring {
+    println!("xirtam rust walletRecovery");
+    let mut error: u8 = 0;
+    let mut result: String;
+    let output = wallet_recovery(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(phrase).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletCheck(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString) -> jstring {
+    println!("xirtam rust walletCheck");
+    let mut error: u8 = 0;
+    let mut result: String;
+
+    let output = wallet_check(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        false,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRestore(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString, ) -> jstring {
+    println!("xirtam rust walletRestore");
+    let mut error: u8 = 0;
+    let mut result: String;
+
+    let output = wallet_restore(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_balance(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    refresh_from_node: jboolean) -> jstring {
+    println!("xirtam rust balance");
+    let mut error: u8 = 0;
+    let mut result: String;
+
+    let output = balance(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        refresh_from_node == 1,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
     env.new_string(error.to_string() + &result).unwrap().into_inner()
 }
