@@ -23,6 +23,7 @@ use jni::objects::{JObject, JString, JClass};
 use jni::sys::jstring;
 use jni::sys::jboolean;
 use jni::sys::jlong;
+use jni::sys::jint;
 
 use grin_wallet_libwallet::{slate_versions, InitTxArgs, NodeClient, WalletInst};
 use grin_wallet_util::grin_core::global::ChainTypes;
@@ -82,7 +83,7 @@ pub fn get_wallet_config(wallet_dir: &str, chain_type: &str, check_node_api_http
     };
     WalletConfig {
         chain_type: Some(chain_type_config),
-        api_listen_interface: "0.0.0.0".to_string(),
+        api_listen_interface: "127.0.0.1".to_string(),
         api_listen_port: 13415,
         api_secret_path: Some(".api_secret".to_string()),
         node_api_secret_path: Some(wallet_dir.to_owned() + "/.api_secret"),
@@ -170,27 +171,6 @@ fn wallet_recovery(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_recovery(
-    path: *const c_char,
-    chain_type: *const c_char,
-    phrase: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_recovery(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(phrase),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-        ),
-        error
-    )
-}
-
 fn wallet_phrase(
     path: &str,
     chain_type: &str,
@@ -202,24 +182,6 @@ fn wallet_phrase(
     seed.to_mnemonic()
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_phrase(
-    path: *const c_char,
-    chain_type: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_phrase(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-        ),
-        error
-    )
-}
 
 fn tx_get(
     path: &str,
@@ -234,31 +196,6 @@ fn tx_get(
     let api = Owner::new(wallet.clone());
     let txs = api.retrieve_txs(refresh_from_node, Some(tx_id), None)?;
     Ok(serde_json::to_string(&txs).unwrap())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_get(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    refresh_from_node: bool,
-    tx_id: u32,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_get(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            refresh_from_node,
-            tx_id,
-        ),
-        error
-    )
 }
 
 fn txs_get(
@@ -278,29 +215,6 @@ fn txs_get(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_txs_get(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    refresh_from_node: bool,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        txs_get(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            refresh_from_node,
-        ),
-        error
-    )
-}
-
 fn outputs_get(
     path: &str,
     chain_type: &str,
@@ -313,29 +227,6 @@ fn outputs_get(
     let api = Owner::new(wallet.clone());
     let outputs = api.retrieve_outputs(true, refresh_from_node, None)?;
     Ok(serde_json::to_string(&outputs).unwrap())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_outputs_get(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    refresh_from_node: bool,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        outputs_get(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            refresh_from_node,
-        ),
-        error
-    )
 }
 
 fn output_get(
@@ -353,32 +244,6 @@ fn output_get(
     Ok(serde_json::to_string(&outputs).unwrap())
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_output_get(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    refresh_from_node: bool,
-    tx_id: u32,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        output_get(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            refresh_from_node,
-            tx_id,
-        ),
-        error
-    )
-}
-
-
 fn balance(
     path: &str,
     chain_type: &str,
@@ -393,29 +258,6 @@ fn balance(
     Ok(serde_json::to_string(&wallet_info).unwrap())
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_balance(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    refresh_from_node: bool,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        balance(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            refresh_from_node,
-        ),
-        error
-    )
-}
-
 fn height(
     path: &str,
     chain_type: &str,
@@ -428,28 +270,6 @@ fn height(
     let height = api.node_height()?;
     Ok(serde_json::to_string(&height).unwrap())
 }
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_height(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        height(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-        ),
-        error
-    )
-}
-
 
 #[derive(Serialize, Deserialize)]
 struct Strategy {
@@ -498,29 +318,6 @@ fn tx_strategies(
     Ok(serde_json::to_string(&result).unwrap())
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_strategies(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    amount: u64,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_strategies(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            amount,
-        ),
-        error
-    )
-}
-
 fn tx_create(
     path: &str,
     chain_type: &str,
@@ -560,33 +357,6 @@ fn tx_create(
     )
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_create(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    amount: u64,
-    selection_strategy_is_use_all: bool,
-    message: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_create(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            &c_str_to_rust(message),
-            amount,
-            selection_strategy_is_use_all,
-        ),
-        error
-    )
-}
-
 fn tx_cancel(
     path: &str,
     chain_type: &str,
@@ -599,29 +369,6 @@ fn tx_cancel(
     let mut api = Owner::new(wallet.clone());
     api.cancel_tx(Some(id), None)?;
     Ok("".to_owned())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_cancel(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    id: u32,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_cancel(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            id,
-        ),
-        error
-    )
 }
 
 fn tx_receive(
@@ -640,31 +387,6 @@ fn tx_receive(
     api.verify_slate_messages(&slate)?;
     slate = api.receive_tx(&mut slate, Some(account), Some(message.to_owned()))?;
     Ok(serde_json::to_string(&slate).map_err(|e| ErrorKind::GenericError(e.to_string()))?)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_receive(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    slate_path: *const c_char,
-    message: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_receive(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            &c_str_to_rust(slate_path),
-            &c_str_to_rust(message),
-        ),
-        error
-    )
 }
 
 fn tx_finalize(
@@ -694,29 +416,6 @@ fn tx_finalize(
             Err(Error::from(e))
         }
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_finalize(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    slate_path: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_finalize(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            &c_str_to_rust(slate_path),
-        ),
-        error
-    )
 }
 
 fn tx_send_http(
@@ -772,35 +471,6 @@ fn tx_send_http(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_send_http(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    amount: u64,
-    selection_strategy_is_use_all: bool,
-    message: *const c_char,
-    dest: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_send_http(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            amount,
-            selection_strategy_is_use_all,
-            &c_str_to_rust(message),
-            &c_str_to_rust(dest),
-        ),
-        error
-    )
-}
-
 fn tx_post(
     path: &str,
     chain_type: &str,
@@ -832,29 +502,6 @@ fn tx_post(
     }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn grin_tx_post(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    tx_slate_id: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        tx_post(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            &c_str_to_rust(tx_slate_id),
-        ),
-        error
-    )
-}
-
 fn wallet_restore(
     path: &str,
     chain_type: &str,
@@ -868,27 +515,6 @@ fn wallet_restore(
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_restore(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_restore(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-        ),
-        error
-    )
 }
 
 fn wallet_check(
@@ -905,29 +531,6 @@ fn wallet_check(
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_check(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    delete_unconfirmed: bool,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_check(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            delete_unconfirmed,
-        ),
-        error
-    )
 }
 
 #[no_mangle]
@@ -1158,6 +761,401 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txCreate(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(message).unwrap().as_ptr())).as_ptr()),
         amount as u64,
         selection_strategy_is_use_all == 1,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txsGet(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    refresh_from_node: jboolean, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txsGet");
+    let output = txs_get(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        refresh_from_node == 1,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txGet(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    refresh_from_node: jboolean,
+    tx_id: jint, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txGet");
+    let output = tx_get(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        refresh_from_node == 1,
+        tx_id as u32,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txStrategies(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    amount: jlong, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txStrategies");
+    let output = tx_strategies(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        amount as u64,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txCancel(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    id: jint, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txCancel");
+    let output = tx_cancel(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        id as u32,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txReceive(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    slate_path: JString,
+    message: JString) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txReceive");
+    let output = tx_receive(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(slate_path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(message).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txSend(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    amount: jlong,
+    selection_strategy_is_use_all: jboolean,
+    message: JString,
+    dest: JString, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txSend");
+    let output = tx_send_http(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        amount as u64,
+        selection_strategy_is_use_all == 1,
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(message).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(dest).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txFinalize(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    slate_path: JString) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txFinalize");
+    let output = tx_finalize(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(slate_path).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txRepost(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    tx_slate_id: JString) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust txRepost");
+    let output = tx_post(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(tx_slate_id).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_height(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust height");
+    let output = height(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_outputsGet(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    refresh_from_node: jboolean, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust outputsGet");
+    let output = outputs_get(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        refresh_from_node == 1,
+    );
+
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_outputGet(
+    env: JNIEnv, _: JObject,
+    path: JString,
+    chain_type: JString,
+    account: JString,
+    password: JString,
+    check_node_api_http_addr: JString,
+    refresh_from_node: jboolean,
+    tx_id: jint, ) -> jstring {
+    let mut error: u8 = 0;
+    let mut result: String;
+    println!("xirtam rust outputGet");
+    let output = output_get(
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
+        refresh_from_node == 1,
+        tx_id as u32,
     );
 
     match output {
