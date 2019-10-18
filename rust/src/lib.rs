@@ -19,7 +19,7 @@
 
 use std::ffi::{CString, CStr};
 use jni::JNIEnv;
-use jni::objects::{JObject, JString, JClass};
+use jni::objects::{JObject, JString};
 use jni::sys::jstring;
 use jni::sys::jboolean;
 use jni::sys::jlong;
