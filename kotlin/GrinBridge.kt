@@ -7,7 +7,30 @@ import java.io.File
  *
  * Docs at https://github.com/vitelabs/Vite_GrinWallet/tree/8b08aa50fdb8bf5152747b0ce4271fa352822c0c
  */
-class GrinBridge {
+class GrinBridge private constructor() {
+
+    private object Holder {
+        var instance = GrinBridge()
+    }
+
+    companion object {
+
+        init {
+            System.loadLibrary("wallet")
+        }
+
+        fun get(
+                chainType: String,
+                walletPath: String,
+                password: String,
+                checkNodeApiHttpAddr: String,
+                apiSecret: String
+        ): GrinBridge {
+            Holder.instance.init(chainType, walletPath, password, checkNodeApiHttpAddr, apiSecret)
+            return Holder.instance
+        }
+    }
+
 
     fun handleCResult(result: String): ResultType {
         val resultType = ResultType()
@@ -77,15 +100,19 @@ class GrinBridge {
             refresh_from_node: Boolean
     ): String
 
-    fun txsGetKT(refreshFromNode: Boolean): String {
-        return txsGet(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                refreshFromNode
-        )
+    fun txsGetKT(refreshFromNode: Boolean, callback: (result: ResultType) -> Unit): String {
+        Thread {
+            val txsGet = txsGet(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    refreshFromNode
+            )
+            callback.invoke(handleCResult(txsGet))
+        }.start()
+        return ""
     }
 
     private external fun txGet(
@@ -99,15 +126,25 @@ class GrinBridge {
     ): String
 
 
-    fun txGetKT(refreshFromNode: Boolean, txId: Int): String {
-        return txGet(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                refreshFromNode, txId
-        )
+    fun txGetKT(
+            refreshFromNode: Boolean,
+            txId: Int,
+            callback: (result: ResultType) -> Unit
+    ): String {
+
+        Thread {
+            val tx = txGet(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    refreshFromNode, txId
+            )
+            callback.invoke(handleCResult(tx))
+        }.start()
+
+        return ""
     }
 
     private external fun txCreate(
@@ -121,6 +158,28 @@ class GrinBridge {
             selection_strategy_is_use_all: Boolean
     ): String
 
+    fun txCreateKT(
+            message: String, amount: Long, selectionStrategyIsUseAll: Boolean,
+            callback: (result: ResultType) -> Unit
+    ): String {
+
+        Thread {
+            val result = txCreate(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    message,
+                    amount,
+                    selectionStrategyIsUseAll
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
+    }
+
     private external fun txStrategies(
             path: String,
             chain_type: String,
@@ -130,15 +189,21 @@ class GrinBridge {
             amount: Long
     ): String
 
-    fun txStrategiesKT(amount: Long): String {
-        return txStrategies(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                amount
-        )
+    fun txStrategiesKT(amount: Long, callback: (result: ResultType) -> Unit): String {
+        Thread {
+            val result = txStrategies(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    amount
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
+
     }
 
     private external fun txCancel(
@@ -150,15 +215,21 @@ class GrinBridge {
             id: Int
     ): String
 
-    fun txCancelKT(id: Int): String {
-        return txCancel(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                id
-        )
+    fun txCancelKT(id: Int, callback: (result: ResultType) -> Unit): String {
+
+        Thread {
+            val result = txCancel(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    id
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
     }
 
     private external fun txReceive(
@@ -174,18 +245,23 @@ class GrinBridge {
     fun txReceiveKT(
             slatePath: String,
             message: String,
-            callback: (result: String) -> Unit
+            callback: (result: ResultType) -> Unit
     ): String {
-        val txReceive = txReceive(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                slatePath, message
-        )
-        callback.invoke(txReceive)
-        return txReceive
+
+        Thread {
+            val result = txReceive(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    slatePath, message
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
+
     }
 
     private external fun txFinalize(
@@ -197,15 +273,21 @@ class GrinBridge {
             slate_path: String
     ): String
 
-    fun txFinalizeKT(slatePath: String): String {
-        return txFinalize(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                slatePath
-        )
+    fun txFinalizeKT(slatePath: String, callback: (result: ResultType) -> Unit): String {
+
+        Thread {
+            val result = txFinalize(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    slatePath
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
     }
 
     private external fun txSend(
@@ -224,19 +306,26 @@ class GrinBridge {
             amount: Long,
             selectionStrategyIsUseAll: Boolean,
             message: String,
-            dest: String
+            dest: String,
+            callback: (result: ResultType) -> Unit
     ): String {
-        return txSend(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                amount,
-                selectionStrategyIsUseAll,
-                message,
-                dest
-        )
+
+        Thread {
+            val result = txSend(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    amount,
+                    selectionStrategyIsUseAll,
+                    message,
+                    dest
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+
+        return ""
     }
 
     private external fun txRepost(
@@ -248,15 +337,20 @@ class GrinBridge {
             tx_slate_id: String
     ): String
 
-    fun txRepostKT(txSlateId: String): String {
-        return txRepost(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                txSlateId
-        )
+    fun txRepostKT(txSlateId: String, callback: (result: ResultType) -> Unit): String {
+
+        Thread {
+            val result = txRepost(
+                    walletPath,
+                    chainType,
+                    account,
+                    password,
+                    checkNodeApiHttpAddr,
+                    txSlateId
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
     }
 
     private external fun walletInit(
@@ -266,13 +360,16 @@ class GrinBridge {
             j_check_node_api_http_addr: String
     ): String
 
-    fun walletInitKT(): String {
-        return walletInit(
+    fun walletInitKT(callback: (result: ResultType) -> Unit): String {
+
+        val result = walletInit(
                 walletPath,
                 chainType,
                 password,
                 checkNodeApiHttpAddr
         )
+        callback.invoke(handleCResult(result))
+        return ""
     }
 
     private external fun walletPhrase(
@@ -282,13 +379,18 @@ class GrinBridge {
             j_check_node_api_http_addr: String
     ): String
 
-    fun walletPhraseKT(): String {
-        return walletPhrase(
-                walletPath,
-                chainType,
-                password,
-                checkNodeApiHttpAddr
-        )
+    fun walletPhraseKT(callback: (result: ResultType) -> Unit): String {
+
+        Thread {
+            val result = walletPhrase(
+                    walletPath,
+                    chainType,
+                    password,
+                    checkNodeApiHttpAddr
+            )
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
     }
 
     private external fun walletRecovery(
@@ -299,6 +401,17 @@ class GrinBridge {
             check_node_api_http_addr: String
     ): String
 
+
+    fun walletRecoveryKT(phrase: String, callback: (result: ResultType) -> Unit): String {
+        Thread {
+            val result =
+                    walletRecovery(walletPath, chainType, phrase, password, checkNodeApiHttpAddr)
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
+
+    }
+
     private external fun walletCheck(
             path: String,
             chain_type: String,
@@ -306,6 +419,15 @@ class GrinBridge {
             password: String,
             check_node_api_http_addr: String
     ): String
+
+    fun walletCheckKT(callback: (result: ResultType) -> Unit): String {
+        Thread {
+            val result =
+                    walletCheck(walletPath, chainType, account, password, checkNodeApiHttpAddr)
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
+    }
 
     private external fun walletRestore(
             path: String,
@@ -315,11 +437,11 @@ class GrinBridge {
             check_node_api_http_addr: String
     ): String
 
-    fun walletRestoreKT(): String {
+    fun walletRestoreKT(callback: (result: ResultType) -> Unit): String {
         Thread {
-            var result =
+            val result =
                     walletRestore(walletPath, chainType, account, password, checkNodeApiHttpAddr)
-            println("xirtam grin_wallet_restore_kt result: $result")
+            callback.invoke(handleCResult(result))
         }.start()
         return ""
     }
@@ -332,14 +454,19 @@ class GrinBridge {
             check_node_api_http_addr: String
     ): String
 
-    fun heightKT(): String {
-        return height(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr
-        )
+    fun heightKT(callback: (result: ResultType) -> Unit): String {
+        Thread {
+            val result =
+                    height(
+                            walletPath,
+                            chainType,
+                            account,
+                            password,
+                            checkNodeApiHttpAddr
+                    )
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
     }
 
     private external fun outputsGet(
@@ -351,15 +478,21 @@ class GrinBridge {
             refresh_from_node: Boolean
     ): String
 
-    fun outputsGetKT(refreshFromNode: Boolean): String {
-        return outputsGet(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                refreshFromNode
-        )
+    fun outputsGetKT(refreshFromNode: Boolean, callback: (result: ResultType) -> Unit): String {
+
+        Thread {
+            val result =
+                    outputsGet(
+                            walletPath,
+                            chainType,
+                            account,
+                            password,
+                            checkNodeApiHttpAddr,
+                            refreshFromNode
+                    )
+            callback.invoke(handleCResult(result))
+        }.start()
+        return ""
     }
 
 
@@ -373,29 +506,39 @@ class GrinBridge {
             tx_id: Int
     ): String
 
-    fun outputGetKT(refreshFromNode: Boolean, txId: Int): String {
-        return outputGet(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                refreshFromNode,
-                txId
-        )
-    }
-
-
-    fun isResponseSlate(slatePath: String): String {
-//        return slatePath.components(separatedBy: ".").last == "response" || slatePath.contains("response")
+    fun outputGetKT(
+            refreshFromNode: Boolean,
+            txId: Int,
+            callback: (result: ResultType) -> Unit
+    ): String {
+        Thread {
+            val result =
+                    outputGet(
+                            walletPath,
+                            chainType,
+                            account,
+                            password,
+                            checkNodeApiHttpAddr,
+                            refreshFromNode,
+                            txId
+                    )
+            callback.invoke(handleCResult(result))
+        }.start()
         return ""
+
     }
 
-    fun getSlateUrl(slateId: String, isResponse: Boolean): String {
+
+//    fun isResponseSlate(slatePath: String): String {
+//        return slatePath.components(separatedBy: ".").last == "response" || slatePath.contains("response")
+//        return ""
+//    }
+//
+//    fun getSlateUrl(slateId: String, isResponse: Boolean): String {
 //        let path = "\(walletUrl.path)/slates/\(slateId).grinslate\(isResponse ? ".response" : "")"
 //        return URL(fileURLWithPath: path)
-        return ""
-    }
+//        return ""
+//    }
 
     private fun checkDirectories() {
         val file = File("$walletPath")
@@ -414,38 +557,8 @@ class GrinBridge {
         }
     }
 
-    fun walletRecoveryKT(phrase: String): String {
-        Thread {
-            var result =
-                    walletRecovery(walletPath, chainType, phrase, password, checkNodeApiHttpAddr)
-            println("xirtam grin_wallet_recovery_kt result:  $result")
-        }.start()
-        return ""
-    }
-
-    fun walletCheckKT(): String {
-        Thread {
-            var result = walletCheck(walletPath, chainType, account, password, checkNodeApiHttpAddr)
-            println("xirtam grin_wallet_check_kt result: $result")
-        }.start()
-        return ""
-    }
-
     external fun hello(
             j_recipient: String
     ): String
-
-    fun txCreateKT(message: String, amount: Long, selectionStrategyIsUseAll: Boolean): String {
-        return txCreate(
-                walletPath,
-                chainType,
-                account,
-                password,
-                checkNodeApiHttpAddr,
-                message,
-                amount,
-                selectionStrategyIsUseAll
-        )
-    }
 
 }
