@@ -541,4 +541,10 @@ class GrinBridge private constructor() {
             j_recipient: String
     ): String
 
+
 }
+
+private fun <T> Observable<T>.applyScheduler(scheduler: Scheduler) =
+        subscribeOn(scheduler).observeOn(AndroidSchedulers.mainThread())
+
+fun <T> Observable<T>.applyIoScheduler() = applyScheduler(Schedulers.io())
