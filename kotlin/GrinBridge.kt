@@ -1,5 +1,7 @@
 package net.vite.wallet.grin
 
+import io.reactivex.Observable
+import net.vite.wallet.network.applyIoScheduler
 import java.io.File
 
 /**
@@ -75,8 +77,10 @@ class GrinBridge private constructor() {
             refresh_from_node: Boolean
     ): String
 
-    fun walletInfo(refreshFromNode: Boolean, callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun walletInfo(
+            refreshFromNode: Boolean
+    ): Observable<ResultType> {
+        return Observable.fromCallable {
             val balance = balance(
                     walletPath,
                     chainType,
@@ -85,10 +89,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     refreshFromNode
             )
-            callback.invoke(handleCResult(balance))
-        }.start()
-
-        return ""
+            handleCResult(balance)
+        }.applyIoScheduler()
     }
 
     private external fun txsGet(
@@ -100,8 +102,10 @@ class GrinBridge private constructor() {
             refresh_from_node: Boolean
     ): String
 
-    fun txsGetKT(refreshFromNode: Boolean, callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun txsGetKT(
+            refreshFromNode: Boolean
+    ): Observable<ResultType> {
+        return Observable.fromCallable {
             val txsGet = txsGet(
                     walletPath,
                     chainType,
@@ -110,9 +114,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     refreshFromNode
             )
-            callback.invoke(handleCResult(txsGet))
-        }.start()
-        return ""
+            handleCResult(txsGet)
+        }.applyIoScheduler()
     }
 
     private external fun txGet(
@@ -128,11 +131,10 @@ class GrinBridge private constructor() {
 
     fun txGetKT(
             refreshFromNode: Boolean,
-            txId: Int,
-            callback: (result: ResultType) -> Unit
-    ): String {
+            txId: Int
+    ): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val tx = txGet(
                     walletPath,
                     chainType,
@@ -141,10 +143,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     refreshFromNode, txId
             )
-            callback.invoke(handleCResult(tx))
-        }.start()
-
-        return ""
+            handleCResult(tx)
+        }.applyIoScheduler()
     }
 
     private external fun txCreate(
@@ -159,11 +159,9 @@ class GrinBridge private constructor() {
     ): String
 
     fun txCreateKT(
-            message: String, amount: Long, selectionStrategyIsUseAll: Boolean,
-            callback: (result: ResultType) -> Unit
-    ): String {
-
-        Thread {
+            message: String, amount: Long, selectionStrategyIsUseAll: Boolean
+    ): Observable<ResultType> {
+        return Observable.fromCallable {
             val result = txCreate(
                     walletPath,
                     chainType,
@@ -174,10 +172,8 @@ class GrinBridge private constructor() {
                     amount,
                     selectionStrategyIsUseAll
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun txStrategies(
@@ -189,8 +185,10 @@ class GrinBridge private constructor() {
             amount: Long
     ): String
 
-    fun txStrategiesKT(amount: Long, callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun txStrategiesKT(
+            amount: Long
+    ): Observable<ResultType> {
+        return Observable.fromCallable {
             val result = txStrategies(
                     walletPath,
                     chainType,
@@ -199,11 +197,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     amount
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
-
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun txCancel(
@@ -215,9 +210,9 @@ class GrinBridge private constructor() {
             id: Int
     ): String
 
-    fun txCancelKT(id: Int, callback: (result: ResultType) -> Unit): String {
+    fun txCancelKT(id: Int): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = txCancel(
                     walletPath,
                     chainType,
@@ -226,10 +221,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     id
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun txReceive(
@@ -244,11 +237,10 @@ class GrinBridge private constructor() {
 
     fun txReceiveKT(
             slatePath: String,
-            message: String,
-            callback: (result: ResultType) -> Unit
-    ): String {
+            message: String
+    ): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = txReceive(
                     walletPath,
                     chainType,
@@ -257,10 +249,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     slatePath, message
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
 
     }
 
@@ -273,9 +263,9 @@ class GrinBridge private constructor() {
             slate_path: String
     ): String
 
-    fun txFinalizeKT(slatePath: String, callback: (result: ResultType) -> Unit): String {
+    fun txFinalizeKT(slatePath: String): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = txFinalize(
                     walletPath,
                     chainType,
@@ -284,10 +274,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     slatePath
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun txSend(
@@ -306,11 +294,10 @@ class GrinBridge private constructor() {
             amount: Long,
             selectionStrategyIsUseAll: Boolean,
             message: String,
-            dest: String,
-            callback: (result: ResultType) -> Unit
-    ): String {
+            dest: String
+    ): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = txSend(
                     walletPath,
                     chainType,
@@ -322,10 +309,8 @@ class GrinBridge private constructor() {
                     message,
                     dest
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun txRepost(
@@ -337,9 +322,11 @@ class GrinBridge private constructor() {
             tx_slate_id: String
     ): String
 
-    fun txRepostKT(txSlateId: String, callback: (result: ResultType) -> Unit): String {
+    fun txRepostKT(
+            txSlateId: String
+    ): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = txRepost(
                     walletPath,
                     chainType,
@@ -348,9 +335,8 @@ class GrinBridge private constructor() {
                     checkNodeApiHttpAddr,
                     txSlateId
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun walletInit(
@@ -360,16 +346,16 @@ class GrinBridge private constructor() {
             j_check_node_api_http_addr: String
     ): String
 
-    fun walletInitKT(callback: (result: ResultType) -> Unit): String {
-
-        val result = walletInit(
-                walletPath,
-                chainType,
-                password,
-                checkNodeApiHttpAddr
-        )
-        callback.invoke(handleCResult(result))
-        return ""
+    fun walletInitKT(): Observable<ResultType> {
+        return Observable.fromCallable {
+            val result = walletInit(
+                    walletPath,
+                    chainType,
+                    password,
+                    checkNodeApiHttpAddr
+            )
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun walletPhrase(
@@ -379,18 +365,17 @@ class GrinBridge private constructor() {
             j_check_node_api_http_addr: String
     ): String
 
-    fun walletPhraseKT(callback: (result: ResultType) -> Unit): String {
+    fun walletPhraseKT(): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result = walletPhrase(
                     walletPath,
                     chainType,
                     password,
                     checkNodeApiHttpAddr
             )
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun walletRecovery(
@@ -402,13 +387,12 @@ class GrinBridge private constructor() {
     ): String
 
 
-    fun walletRecoveryKT(phrase: String, callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun walletRecoveryKT(phrase: String): Observable<ResultType> {
+        return Observable.fromCallable {
             val result =
                     walletRecovery(walletPath, chainType, phrase, password, checkNodeApiHttpAddr)
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
 
     }
 
@@ -420,13 +404,12 @@ class GrinBridge private constructor() {
             check_node_api_http_addr: String
     ): String
 
-    fun walletCheckKT(callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun walletCheckKT(): Observable<ResultType> {
+        return Observable.fromCallable {
             val result =
                     walletCheck(walletPath, chainType, account, password, checkNodeApiHttpAddr)
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun walletRestore(
@@ -437,13 +420,12 @@ class GrinBridge private constructor() {
             check_node_api_http_addr: String
     ): String
 
-    fun walletRestoreKT(callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun walletRestoreKT(): Observable<ResultType> {
+        return Observable.fromCallable {
             val result =
                     walletRestore(walletPath, chainType, account, password, checkNodeApiHttpAddr)
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun height(
@@ -454,8 +436,8 @@ class GrinBridge private constructor() {
             check_node_api_http_addr: String
     ): String
 
-    fun heightKT(callback: (result: ResultType) -> Unit): String {
-        Thread {
+    fun heightKT(): Observable<ResultType> {
+        return Observable.fromCallable {
             val result =
                     height(
                             walletPath,
@@ -464,9 +446,8 @@ class GrinBridge private constructor() {
                             password,
                             checkNodeApiHttpAddr
                     )
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
     private external fun outputsGet(
@@ -478,9 +459,11 @@ class GrinBridge private constructor() {
             refresh_from_node: Boolean
     ): String
 
-    fun outputsGetKT(refreshFromNode: Boolean, callback: (result: ResultType) -> Unit): String {
+    fun outputsGetKT(
+            refreshFromNode: Boolean
+    ): Observable<ResultType> {
 
-        Thread {
+        return Observable.fromCallable {
             val result =
                     outputsGet(
                             walletPath,
@@ -490,9 +473,8 @@ class GrinBridge private constructor() {
                             checkNodeApiHttpAddr,
                             refreshFromNode
                     )
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
     }
 
 
@@ -508,10 +490,9 @@ class GrinBridge private constructor() {
 
     fun outputGetKT(
             refreshFromNode: Boolean,
-            txId: Int,
-            callback: (result: ResultType) -> Unit
-    ): String {
-        Thread {
+            txId: Int
+    ): Observable<ResultType> {
+        return Observable.fromCallable {
             val result =
                     outputGet(
                             walletPath,
@@ -522,9 +503,8 @@ class GrinBridge private constructor() {
                             refreshFromNode,
                             txId
                     )
-            callback.invoke(handleCResult(result))
-        }.start()
-        return ""
+            handleCResult(result)
+        }.applyIoScheduler()
 
     }
 
