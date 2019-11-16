@@ -66,7 +66,12 @@ apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncurs
 git clone https://github.com/vitelabs/Vite_GrinWallet-android.git
 cd Vite_GrinWallet-android
 cd rust
+
+#64 bit
 cargo build --target aarch64-linux-android --release
+
+#32 bit
+CC=arm-linux-androideabi-clang cargo build --target armv7-linux-androideabi --release
 ```
 
 ## Thanks
@@ -75,6 +80,4 @@ cargo build --target aarch64-linux-android --release
 - https://github.com/mimblewimble/grin
 - https://github.com/mimblewimble/grin-wallet
 
-## TODO
 
-- support 32bit so
