@@ -238,9 +238,11 @@ fn wallet_recovery(
         ZeroingString::from(password),
         false,
     )?;
-    let mut api = Owner::new(wallet.clone());
-    api.scan(None, None, true)?;
-    Ok("".to_owned())
+    let api = Owner::new(wallet.clone());
+    match api.scan(None, None, true) {
+        Ok(_) => Ok("".to_owned()),
+        Err(e) => Err(Error::from(e)),
+    }
 }
 
 #[no_mangle]
@@ -465,7 +467,7 @@ fn balance(
     refresh_from_node: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone());
     let (_validated, wallet_info) = api.retrieve_summary_info(None, refresh_from_node, 10)?;
     Ok(serde_json::to_string(&wallet_info).unwrap())
 }
@@ -501,7 +503,7 @@ fn height(
     check_node_api_http_addr: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone());
     let height = api.node_height(None)?;
     Ok(serde_json::to_string(&height).unwrap())
 }
@@ -611,7 +613,7 @@ fn tx_create(
     selection_strategy_is_use_all: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone());
     let args = InitTxArgs {
         src_acct_name: None,
         amount,
@@ -675,7 +677,7 @@ fn tx_cancel(
     id: u32,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone());
     api.cancel_tx(None, Some(id), None)?;
     Ok("".to_owned())
 }
@@ -758,7 +760,7 @@ fn tx_finalize(
     let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
     api.verify_slate_messages(None, &slate)?;
     match api.finalize_tx(None, &slate) {
-        Ok(mut slate) => {
+        Ok(slate) => {
             Ok(
                 serde_json::to_string(&slate_versions::VersionedSlate::into_version(
                     slate.clone(),
@@ -832,9 +834,9 @@ fn tx_send_http(
     );
     api.tx_lock_outputs(None, &slate, 0)?;
     match sender.send_tx(&slate) {
-        Ok(mut slate) => {
+        Ok(slate) => {
             api.verify_slate_messages(None, &slate)?;
-            api.finalize_tx(None, &mut slate)?;
+            api.finalize_tx(None, &slate)?;
             Ok(
                 serde_json::to_string(&slate_versions::VersionedSlate::into_version(
                     slate.clone(),
@@ -941,7 +943,7 @@ fn wallet_restore(
     check_node_api_http_addr: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone());
     match api.scan(None, None, true) {
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
@@ -978,12 +980,11 @@ fn wallet_check(
     delete_unconfirmed: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let mut api = Owner::new(wallet.clone());
-    match api.scan(None, None, false)
-        {
-            Ok(_) => Ok("".to_owned()),
-            Err(e) => Err(Error::from(e)),
-        }
+    let api = Owner::new(wallet.clone());
+    match api.scan(None, None, false) {
+        Ok(_) => Ok("".to_owned()),
+        Err(e) => Err(Error::from(e)),
+    }
 }
 
 #[no_mangle]
@@ -1025,7 +1026,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_hello(
 //pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletInit(env: JNIEnv, _: JObject, j_recipient: JString, j_chain_type: JString, j_password: JString, j_check_node_api_http_addr: JString) -> jstring {
 //    println!("xirtam rust walletInit");
 //    let mut error: u8 = 0;
-//    let mut result: String;
+//    let result: String;
 //    let output = wallet_init(
 //        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_recipient).unwrap().as_ptr())).as_ptr()),
 //        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_chain_type).unwrap().as_ptr())).as_ptr()),
@@ -1054,7 +1055,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_hello(
 //    j_check_node_api_http_addr: JString, ) -> jstring {
 //    println!("xirtam rust walletPhrase");
 //    let mut error: u8 = 0;
-//    let mut result: String;
+//    let result: String;
 //    let output = wallet_phrase(
 //        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_path).unwrap().as_ptr())).as_ptr()),
 //        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_chain_type).unwrap().as_ptr())).as_ptr()),
@@ -1081,16 +1082,16 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRecovery(
     env: JNIEnv, _: JObject,
     path: JString,
     chain_type: JString,
+    account: JString,
     phrase: JString,
     password: JString,
     check_node_api_http_addr: JString, ) -> jstring {
-    println!("xirtam rust walletRecovery");
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     let output = wallet_recovery(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
-        "default",
+        &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(phrase).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
@@ -1106,7 +1107,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRecovery(
             result = e.to_string();
         }
     }
-
+    println!("xirtam rust walletRecovery");
     env.new_string(error.to_string() + &result).unwrap().into_inner()
 }
 
@@ -1120,7 +1121,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletCheck(
     check_node_api_http_addr: JString) -> jstring {
     println!("xirtam rust walletCheck");
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
 
     let output = wallet_check(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1155,7 +1156,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRestore(
     check_node_api_http_addr: JString, ) -> jstring {
     println!("xirtam rust walletRestore");
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
 
     let output = wallet_restore(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1189,7 +1190,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_balance(
     check_node_api_http_addr: JString,
     refresh_from_node: jboolean) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
 
     let output = balance(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1227,7 +1228,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txCreate(
     amount: jlong,
     selection_strategy_is_use_all: jboolean) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txCreate");
     let output = tx_create(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1264,7 +1265,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txsGet(
     check_node_api_http_addr: JString,
     refresh_from_node: jboolean, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txsGet");
     let output = txs_get(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1300,7 +1301,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txGet(
     refresh_from_node: jboolean,
     tx_id: jint, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txGet");
     let output = tx_get(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1336,7 +1337,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txStrategies(
     check_node_api_http_addr: JString,
     amount: jlong, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txStrategies");
     let output = tx_strategies(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1371,7 +1372,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txCancel(
     check_node_api_http_addr: JString,
     id: jint, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txCancel");
     let output = tx_cancel(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1407,7 +1408,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txReceive(
     slate_path: JString,
     message: JString) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txReceive");
     let output = tx_receive(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1446,7 +1447,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txSend(
     message: JString,
     dest: JString, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txSend");
     let output = tx_send_http(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1484,7 +1485,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txFinalize(
     check_node_api_http_addr: JString,
     slate_path: JString) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txFinalize");
     let output = tx_finalize(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1519,7 +1520,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_txRepost(
     check_node_api_http_addr: JString,
     tx_slate_id: JString) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust txRepost");
     let output = tx_post(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1553,7 +1554,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_height(
     password: JString,
     check_node_api_http_addr: JString) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust height");
     let output = height(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1587,7 +1588,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_outputsGet(
     check_node_api_http_addr: JString,
     refresh_from_node: jboolean, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust outputsGet");
     let output = outputs_get(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
@@ -1623,7 +1624,7 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_outputGet(
     refresh_from_node: jboolean,
     tx_id: jint, ) -> jstring {
     let mut error: u8 = 0;
-    let mut result: String;
+    let result: String;
     println!("xirtam rust outputGet");
     let output = output_get(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
