@@ -45,6 +45,11 @@ use std::os::raw::c_char;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use grin_wallet_util::grin_util::logger::LoggingConfig;
+use grin_wallet_util::grin_util::init_logger;
+use log::{Level};
+use std::path::PathBuf;
+
 fn c_str_to_rust(s: *const c_char) -> String {
     unsafe { CStr::from_ptr(s).to_string_lossy().into_owned() }
 }
@@ -74,6 +79,48 @@ impl State {
     }
 }
 
+pub fn get_wallet_log_config(wallet_dir: &str) -> LoggingConfig{
+    let mut path = PathBuf::from(wallet_dir);
+    path.push("grin-wallet.log");
+
+    LoggingConfig {
+        log_to_stdout: true,
+        stdout_log_level: Level::Warn,
+        log_to_file: true,
+        file_log_level: Level::Info,
+        log_file_path: path.to_str().unwrap().to_owned(),
+        log_file_append: true,
+        log_max_size: Some(1024 * 1024 * 16), // 16 megabytes default
+        log_max_files: Some(32),
+        tui_running: None,
+    }
+}
+
+pub fn init_grin_log(path: &str) -> Result<String, Error> {
+    let wallet_log_config = get_wallet_log_config(path);
+    init_logger(Some(wallet_log_config), None);
+    Ok("ok".to_owned())
+}
+
+#[no_mangle]
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_init_grin_log(
+    env: JNIEnv, _: JObject, j_path: JString) -> jstring {
+    let mut error: u8 = 0;
+    let result: String;
+    let output = init_grin_log(&c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(j_path).unwrap().as_ptr())).as_ptr()));
+    match output {
+        Ok(v) => {
+            error = 0;
+            result = v.to_string();
+        }
+        Err(e) => {
+            error = 1;
+            result = e.to_string();
+        }
+    }
+
+    env.new_string(error.to_string() + &result).unwrap().into_inner()
+}
 
 pub fn get_wallet_config(wallet_dir: &str, chain_type: &str, check_node_api_http_addr: &str) -> WalletConfig {
     let chain_type_config = match chain_type {
@@ -980,37 +1027,15 @@ fn wallet_check(
     account: &str,
     password: &str,
     check_node_api_http_addr: &str,
-    delete_unconfirmed: bool,
+    start_height: u64,
+    delete_unconfirmed: bool
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone());
-    match api.scan(None, None, false) {
+    match api.scan(None, Some(start_height), delete_unconfirmed) {
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn grin_wallet_check(
-    path: *const c_char,
-    chain_type: *const c_char,
-    account: *const c_char,
-    password: *const c_char,
-    check_node_api_http_addr: *const c_char,
-    delete_unconfirmed: bool,
-    error: *mut u8,
-) -> *const c_char {
-    unwrap_to_c!(
-        wallet_check(
-            &c_str_to_rust(path),
-            &c_str_to_rust(chain_type),
-            &c_str_to_rust(account),
-            &c_str_to_rust(password),
-            &c_str_to_rust(check_node_api_http_addr),
-            delete_unconfirmed,
-        ),
-        error
-    )
 }
 
 #[no_mangle]
@@ -1121,18 +1146,21 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletCheck(
     chain_type: JString,
     account: JString,
     password: JString,
-    check_node_api_http_addr: JString) -> jstring {
+    check_node_api_http_addr: JString,
+    start_height: jlong,
+    delete_unconfirmed: jboolean
+) -> jstring {
     println!("xirtam rust walletCheck");
     let mut error: u8 = 0;
     let result: String;
-
     let output = wallet_check(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(path).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(chain_type).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(account).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
-        false,
+        start_height as u64,
+        delete_unconfirmed == 1
     );
 
     match output {
