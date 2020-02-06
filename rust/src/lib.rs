@@ -84,7 +84,7 @@ pub fn get_wallet_log_config(wallet_dir: &str) -> LoggingConfig{
     path.push("grin-wallet.log");
 
     LoggingConfig {
-        log_to_stdout: true,
+        log_to_stdout: false,
         stdout_log_level: Level::Warn,
         log_to_file: true,
         file_log_level: Level::Info,
@@ -103,7 +103,7 @@ pub fn init_grin_log(path: &str) -> Result<String, Error> {
 }
 
 #[no_mangle]
-pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_init_grin_log(
+pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_initLog(
     env: JNIEnv, _: JObject, j_path: JString) -> jstring {
     let mut error: u8 = 0;
     let result: String;
