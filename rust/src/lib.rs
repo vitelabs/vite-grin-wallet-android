@@ -1030,9 +1030,11 @@ fn wallet_check(
     start_height: u64,
     delete_unconfirmed: bool
 ) -> Result<String, Error> {
+//println!("xirtam rust walletCheck impl {0} {1} {2} {3} {4} {5} {6}",path, chain_type, account, password, check_node_api_http_addr,start_height,delete_unconfirmed);
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone());
-    match api.scan(None, Some(start_height), delete_unconfirmed) {
+//    match api.scan(None, Some(start_height), delete_unconfirmed) {
+    match api.scan(None, None, false) {
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
     }
@@ -1124,7 +1126,6 @@ pub unsafe extern fn Java_net_vite_wallet_grin_GrinBridge_walletRecovery(
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(password).unwrap().as_ptr())).as_ptr()),
         &c_str_to_rust(CString::from(CStr::from_ptr(env.get_string(check_node_api_http_addr).unwrap().as_ptr())).as_ptr()),
     );
-    println!("xirtam rust walletRecovery output");
     match output {
         Ok(v) => {
             error = 0;
