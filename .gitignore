@@ -32,3 +32,5 @@
 /.idea/Vite_GrinWallet-android.iml
 /Example/Vite_GrinWallet.xcodeproj/xcshareddata/xcschemes/Vite_GrinWallet-Example.xcscheme
 /Example/Vite_GrinWallet.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+/.idea/.gitignore
+/vite-grin-wallet-android.iml

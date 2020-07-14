@@ -288,7 +288,7 @@ fn wallet_recovery(
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
     }
-    //let api = Owner::new(wallet.clone());
+    //let api = Owner::new(wallet.clone(), None);
     //match api.scan(None, None, true) {
     //    Ok(_) => Ok("".to_owned()),
     //    Err(e) => Err(Error::from(e)),
@@ -360,7 +360,7 @@ fn tx_get(
     tx_id: u32,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let txs = api.retrieve_txs(None, refresh_from_node, Some(tx_id), None)?;
     Ok(serde_json::to_string(&txs).unwrap())
 }
@@ -399,7 +399,7 @@ fn txs_get(
     refresh_from_node: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
 
     match api.retrieve_txs(None, refresh_from_node, None, None) {
         Ok(txs) => Ok(serde_json::to_string(&txs).unwrap()),
@@ -439,7 +439,7 @@ fn outputs_get(
     refresh_from_node: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let outputs = api.retrieve_outputs(None, true, refresh_from_node, None)?;
     Ok(serde_json::to_string(&outputs).unwrap())
 }
@@ -477,7 +477,7 @@ fn output_get(
     tx_id: u32,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let outputs = api.retrieve_outputs(None, true, refresh_from_node, Some(tx_id))?;
     Ok(serde_json::to_string(&outputs).unwrap())
 }
@@ -517,7 +517,7 @@ fn balance(
     refresh_from_node: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let (_validated, wallet_info) = api.retrieve_summary_info(None, refresh_from_node, 10)?;
     Ok(serde_json::to_string(&wallet_info).unwrap())
 }
@@ -553,7 +553,7 @@ fn height(
     check_node_api_http_addr: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let height = api.node_height(None)?;
     Ok(serde_json::to_string(&height).unwrap())
 }
@@ -596,7 +596,7 @@ fn tx_strategies(
     amount: u64,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let mut result = vec![];
     let mut args = InitTxArgs {
         src_acct_name: None,
@@ -663,7 +663,7 @@ fn tx_create(
     selection_strategy_is_use_all: bool,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let args = InitTxArgs {
         src_acct_name: None,
         amount,
@@ -679,13 +679,13 @@ fn tx_create(
         ttl_blocks: None,
     };
     let mut slate = api.init_send_tx(None, args).unwrap();
-    slate.version_info.version = 2;
-    slate.version_info.orig_version = 2;
+    slate.version_info.version = 4;
+
     api.tx_lock_outputs(None, &slate, 0)?;
     Ok(
         serde_json::to_string(&slate_versions::VersionedSlate::into_version(
             slate.clone(),
-            slate_versions::SlateVersion::V2,
+            slate_versions::SlateVersion::V4,
         ))
             .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
     )
@@ -727,7 +727,7 @@ fn tx_cancel(
     id: u32,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     api.cancel_tx(None, Some(id), None)?;
     Ok("".to_owned())
 }
@@ -806,7 +806,7 @@ fn tx_finalize(
     slate_path: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
     api.verify_slate_messages(None, &slate)?;
     match api.finalize_tx(None, &slate) {
@@ -814,7 +814,7 @@ fn tx_finalize(
             Ok(
                 serde_json::to_string(&slate_versions::VersionedSlate::into_version(
                     slate.clone(),
-                    slate_versions::SlateVersion::V2,
+                    slate_versions::SlateVersion::V4,
                 ))
                     .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
             )
@@ -860,7 +860,7 @@ fn tx_send_http(
     dest: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let args = InitTxArgs {
         src_acct_name: None,
         amount,
@@ -877,7 +877,7 @@ fn tx_send_http(
     };
     let mut slate = api.init_send_tx(None, args)?;
     slate.version_info.version = 2;
-    slate.version_info.orig_version = 2;
+    //slate.version_info.orig_version = 2;
     let sender = Box::new(
         HttpSlateSender::new(dest)
             .map_err(|_| ErrorKind::GenericError(format!("Invalid destination URL: {}", dest)))?,
@@ -890,7 +890,7 @@ fn tx_send_http(
             Ok(
                 serde_json::to_string(&slate_versions::VersionedSlate::into_version(
                     slate.clone(),
-                    slate_versions::SlateVersion::V2,
+                    slate_versions::SlateVersion::V4,
                 ))
                     .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
             )
@@ -940,7 +940,7 @@ fn tx_post(
     tx_slate_id: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     let uuid = Uuid::parse_str(tx_slate_id).map_err(|e| ErrorKind::GenericError(e.to_string()))?;
     let (_, txs) = api.retrieve_txs(None, true, None, Some(uuid))?;
     if txs[0].confirmed {
@@ -993,7 +993,7 @@ fn wallet_restore(
     check_node_api_http_addr: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
+    let api = Owner::new(wallet.clone(), None);
     match api.scan(None, None, true) {
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),
@@ -1032,8 +1032,7 @@ fn wallet_check(
 ) -> Result<String, Error> {
 //println!("xirtam rust walletCheck impl {0} {1} {2} {3} {4} {5} {6}",path, chain_type, account, password, check_node_api_http_addr,start_height,delete_unconfirmed);
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Owner::new(wallet.clone());
-//    match api.scan(None, Some(start_height), delete_unconfirmed) {
+    let api = Owner::new(wallet.clone(), None);
     match api.scan(None, None, false) {
         Ok(_) => Ok("".to_owned()),
         Err(e) => Err(Error::from(e)),

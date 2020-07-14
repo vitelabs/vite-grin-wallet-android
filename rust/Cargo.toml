@@ -1,21 +1,23 @@
 [package]
 name = "vite_grin_wallet"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["xirtam-zhang <xirtam.zhang@gmail.com>"]
 description = "Grin mobile lib"
 publish = false
 edition = "2018"
 
 [dependencies]
-clap = { version = "2.31", features = ["yaml"] }
-rpassword = "2.0.0"
-ctrlc = { version = "3.1", features = ["termination"] }
+clap = { version = "2.33", features = ["yaml"] }
+rpassword = "4.0"
 failure = "0.1"
 failure_derive = "0.1"
-prettytable-rs = "0.7"
+prettytable-rs = "0.8"
 log = "0.4"
-linefeed = "0.5"
-semver = "0.9"
+linefeed = "0.6"
+semver = "0.10"
+rustyline = "6"
+lazy_static = "1"
+bindgen = "0.53.1"
 
 uuid = "0.7.4"
 serde = { version = "1", features = ["derive"] }
@@ -31,11 +33,12 @@ serde_derive = "1"
 #term = "0.5"
 
 #9360e5c56e64099f0eb8317edc80fe45613a94ce 3.0
-grin_wallet_api = { git = "https://github.com/mimblewimble/grin-wallet", rev = "9360e5c56e64099f0eb8317edc80fe45613a94ce" }
-grin_wallet_impls = { git = "https://github.com/mimblewimble/grin-wallet", rev = "9360e5c56e64099f0eb8317edc80fe45613a94ce" }
-grin_wallet_libwallet = { git = "https://github.com/mimblewimble/grin-wallet", rev = "9360e5c56e64099f0eb8317edc80fe45613a94ce" }
-grin_wallet_config = { git = "https://github.com/mimblewimble/grin-wallet", rev = "9360e5c56e64099f0eb8317edc80fe45613a94ce" }
-grin_wallet_util = { git = "https://github.com/mimblewimble/grin-wallet", rev = "9360e5c56e64099f0eb8317edc80fe45613a94ce" }
+grin_wallet_api = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
+grin_wallet_impls = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
+grin_wallet_libwallet = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
+grin_wallet_config = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
+grin_wallet_util = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
+grin_wallet_controller = { git = "https://github.com/mimblewimble/grin-wallet", rev = "47e99f56038f5c567a6832654053e82c28f65de9" }
 jni = { version = "0.10.2", default-features = false, optional= true}
 
 [profile.release]
@@ -45,17 +48,18 @@ lto = true
 android_logger = "0.8"
 
 [build-dependencies]
-built = "0.3"
-reqwest = "0.9"
-flate2 = "1.0"
-tar = "0.4"
-cbindgen = "0.8.3"
+built = { version = "0.4", features = ["git2"]}
+#built = "0.3"
+#reqwest = "0.9"
+#flate2 = "1.0"
+#tar = "0.4"
+#cbindgen = "0.8.3"
 
-#[grin_pool.serde]
-#version = "1.0.93"
+[grin_pool.serde]
+version = "1.0.93"
 
-#[grin_pool.serde_derive]
-#version = "1.0.93"
+[grin_pool.serde_derive]
+version = "1.0.93"
 
 [lib]
 name = "wallet"
@@ -68,8 +72,10 @@ crate-type = ["cdylib"]
 
 lmdb-zero = { path = "./lmdb-zero", version = "0.4.4" }
 lmdb-sys = { path = "./lmdb-rs-master/lmdb-sys", version = "0.8.0" }
-serde = { git = "https://github.com/serde-rs/serde",version="1.0.93" }
-nix = { path = "./nix-0.7.0",version="0.7.0" }
+#clang-sys ={ version = "0.28.1" }
+#serde = { git = "https://github.com/serde-rs/serde",version="1.0.93" }
+#nix = { path = "./nix-0.7.0",version="0.7.0" }
+
 #grin_pool = { path = "./grin/pool", version = "2.0.0" }
 #grin_core = { path = "./grin/core", version = "2.0.0" }
 #grin_api = { path = "./grin/api", version = "2.0.0" }
