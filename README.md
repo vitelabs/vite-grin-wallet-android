@@ -29,7 +29,7 @@ export ${STANDALONE_NDK}/arm64/bin
 export ${STANDALONE_NDK}/x86/bin
 ```
 
-- create catgo config
+- create cargo config
 
 ```
 touch cargo-config.toml
