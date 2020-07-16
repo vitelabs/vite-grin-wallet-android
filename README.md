@@ -7,6 +7,11 @@
   * if rust is already installed, you can simply update version with `rustup update`
 * NDK20
 
+- install requirements
+```sh
+apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncursesw5-dev zlib1g-dev pkg-config libssl-dev llvm
+```
+
 - create standalone toolchain
 ```
 ${NDK_HOME}/build/tools/make_standalone_toolchain.py --api 26 --arch arm64 --install-dir ${STANDALONE_NDK}/arm64
@@ -54,17 +59,11 @@ cp cargo-config.toml ~/.cargo/config
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
 ```
 
-- install requirements
-```sh
-apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncursesw5-dev zlib1g-dev pkg-config libssl-dev llvm
-```
-
-
 
 ## Build 
 ```
-git clone https://github.com/vitelabs/Vite_GrinWallet-android.git
-cd Vite_GrinWallet-android
+git clone https://github.com/vitelabs/vite-grin-wallet-android.git
+cd vite-grin-wallet-android
 cd rust
 
 #64 bit
@@ -74,7 +73,7 @@ cargo build --target aarch64-linux-android --release
 CC=arm-linux-androideabi-clang cargo build --target armv7-linux-androideabi --release
 ```
 
-## Thanks
+## Links
 - https://github.com/cyclefortytwo/ironbelly
 - https://github.com/vitelabs/Vite_GrinWallet
 - https://github.com/mimblewimble/grin
