@@ -1,4 +1,4 @@
-# Vite_GrinWallet Android
+# vite-grin-wallet-android
 
 
 ## Requirements
