@@ -605,12 +605,7 @@ fn tx_strategies(
         max_outputs: 500,
         num_change_outputs: 1,
         selection_strategy_is_use_all: false,
-        message: None,
-        target_slate_version: Some(2),
-        estimate_only: Some(true),
-        send_args: None,
-        payment_proof_recipient_address: None,
-        ttl_blocks: None,
+        ..Default::default()
     };
     if let Ok(smallest) = api.init_send_tx(None, args.clone()) {
         result.push(Strategy {
@@ -671,22 +666,14 @@ fn tx_create(
         max_outputs: 500,
         num_change_outputs: 1,
         selection_strategy_is_use_all,
-        message: Some(message.to_owned()),
-        target_slate_version: Some(2),
-        estimate_only: Some(false),
-        send_args: None,
-        payment_proof_recipient_address: None,
-        ttl_blocks: None,
+        ..Default::default()
     };
     let mut slate = api.init_send_tx(None, args).unwrap();
     slate.version_info.version = 4;
 
-    api.tx_lock_outputs(None, &slate, 0)?;
+    api.tx_lock_outputs(None, &slate)?;
     Ok(
-        serde_json::to_string(&slate_versions::VersionedSlate::into_version(
-            slate.clone(),
-            slate_versions::SlateVersion::V4,
-        ))
+        serde_json::to_string(&slate.clone())
             .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
     )
 }
@@ -765,10 +752,10 @@ fn tx_receive(
     message: &str,
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
-    let api = Foreign::new(wallet.clone(), None, None);
+    let api = Foreign::new(wallet.clone(), None, None, true);
     let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
-    api.verify_slate_messages(&slate)?;
-    slate = api.receive_tx(&slate, Some(&account), Some(message.to_owned()))?;
+    //api.verify_slate_messages(&slate)?;
+    slate = api.receive_tx(&slate, None, None)?;
     Ok(serde_json::to_string(&slate).map_err(|e| ErrorKind::GenericError(e.to_string()))?)
 }
 
@@ -808,14 +795,11 @@ fn tx_finalize(
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone(), None);
     let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
-    api.verify_slate_messages(None, &slate)?;
+    //api.verify_slate_messages(None, &slate)?;
     match api.finalize_tx(None, &slate) {
         Ok(slate) => {
             Ok(
-                serde_json::to_string(&slate_versions::VersionedSlate::into_version(
-                    slate.clone(),
-                    slate_versions::SlateVersion::V4,
-                ))
+                serde_json::to_string(&slate.clone())
                     .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
             )
         }
@@ -868,7 +852,6 @@ fn tx_send_http(
         max_outputs: 500,
         num_change_outputs: 1,
         selection_strategy_is_use_all,
-        message: Some(message.to_owned()),
         target_slate_version: Some(2),
         estimate_only: Some(false),
         send_args: None,
@@ -882,16 +865,13 @@ fn tx_send_http(
         HttpSlateSender::new(dest)
             .map_err(|_| ErrorKind::GenericError(format!("Invalid destination URL: {}", dest)))?,
     );
-    api.tx_lock_outputs(None, &slate, 0)?;
-    match sender.send_tx(&slate) {
+    api.tx_lock_outputs(None, &slate)?;
+    match sender.send_tx(&slate, false) {
         Ok(slate) => {
-            api.verify_slate_messages(None, &slate)?;
+            //api.verify_slate_messages(None, &slate)?;
             api.finalize_tx(None, &slate)?;
             Ok(
-                serde_json::to_string(&slate_versions::VersionedSlate::into_version(
-                    slate.clone(),
-                    slate_versions::SlateVersion::V4,
-                ))
+                serde_json::to_string(&slate.clone())
                     .map_err(|e| ErrorKind::GenericError(e.to_string()))?,
             )
         }
@@ -949,7 +929,7 @@ fn tx_post(
             tx_slate_id
         ))));
     }
-    let stored_tx = api.get_stored_tx(None, &txs[0])?;
+    let stored_tx = api.get_stored_tx(None, None, Some(&txs[0].tx_slate_id.unwrap()))?;
     match stored_tx {
         Some(stored_tx) => {
             api.post_tx(None, &stored_tx, true)?;
