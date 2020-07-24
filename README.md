@@ -1,4 +1,4 @@
-# Vite_GrinWallet Android
+# vite-grin-wallet-android
 
 
 ## Requirements
@@ -6,6 +6,11 @@
 * rust 1.34+ (use [rustup]((https://www.rustup.rs/))- i.e. `curl https://sh.rustup.rs -sSf | sh; source $HOME/.cargo/env`)
   * if rust is already installed, you can simply update version with `rustup update`
 * NDK20
+
+- install requirements
+```sh
+apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncursesw5-dev zlib1g-dev pkg-config libssl-dev llvm
+```
 
 - create standalone toolchain
 ```
@@ -24,7 +29,7 @@ export ${STANDALONE_NDK}/arm64/bin
 export ${STANDALONE_NDK}/x86/bin
 ```
 
-- create catgo config
+- create cargo config
 
 ```
 touch cargo-config.toml
@@ -54,17 +59,11 @@ cp cargo-config.toml ~/.cargo/config
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android
 ```
 
-- install requirements
-```sh
-apt install build-essential cmake git libgit2-dev clang libncurses5-dev libncursesw5-dev zlib1g-dev pkg-config libssl-dev llvm
-```
-
-
 
 ## Build 
 ```
-git clone https://github.com/vitelabs/Vite_GrinWallet-android.git
-cd Vite_GrinWallet-android
+git clone https://github.com/vitelabs/vite-grin-wallet-android.git
+cd vite-grin-wallet-android
 cd rust
 
 #64 bit
@@ -74,7 +73,7 @@ cargo build --target aarch64-linux-android --release
 CC=arm-linux-androideabi-clang cargo build --target armv7-linux-androideabi --release
 ```
 
-## Thanks
+## Links
 - https://github.com/cyclefortytwo/ironbelly
 - https://github.com/vitelabs/Vite_GrinWallet
 - https://github.com/mimblewimble/grin
