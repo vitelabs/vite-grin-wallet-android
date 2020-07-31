@@ -25,7 +25,7 @@ use jni::sys::jint;
 use grin_wallet_libwallet::{
     slate_versions, InitTxArgs, NodeClient, WalletInst, WalletLCProvider,
 };
-use grin_wallet_util::grin_core::global::ChainTypes;
+use grin_wallet_util::grin_core::global::{self, ChainTypes};
 use grin_wallet_util::grin_keychain::{ExtKeychain, Keychain};
 use grin_wallet_util::grin_util::file::get_first_line;
 use grin_wallet_util::grin_util::Mutex;
@@ -129,6 +129,9 @@ pub fn get_wallet_config(wallet_dir: &str, chain_type: &str, check_node_api_http
         "mainnet" => ChainTypes::Mainnet,
         _ => ChainTypes::Mainnet,
     };
+
+    global::set_local_chain_type(ChainTypes::Mainnet);
+
     WalletConfig {
         chain_type: Some(chain_type_config),
         api_listen_interface: "127.0.0.1".to_string(),
