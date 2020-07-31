@@ -753,7 +753,7 @@ fn tx_receive(
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Foreign::new(wallet.clone(), None, None, true);
-    let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
+    let (mut slate, bo) = PathToSlate((&slate_path).into()).get_tx()?;
     //api.verify_slate_messages(&slate)?;
     slate = api.receive_tx(&slate, None, None)?;
     Ok(serde_json::to_string(&slate).map_err(|e| ErrorKind::GenericError(e.to_string()))?)
@@ -794,7 +794,7 @@ fn tx_finalize(
 ) -> Result<String, Error> {
     let wallet = get_wallet(path, chain_type, account, password, check_node_api_http_addr)?;
     let api = Owner::new(wallet.clone(), None);
-    let mut slate = PathToSlate((&slate_path).into()).get_tx()?;
+    let (mut slate, bo) = PathToSlate((&slate_path).into()).get_tx()?;
     //api.verify_slate_messages(None, &slate)?;
     match api.finalize_tx(None, &slate) {
         Ok(slate) => {
@@ -861,7 +861,7 @@ fn tx_send_http(
     let mut slate = api.init_send_tx(None, args)?;
     slate.version_info.version = 2;
     //slate.version_info.orig_version = 2;
-    let sender = Box::new(
+    let mut sender = Box::new(
         HttpSlateSender::new(dest)
             .map_err(|_| ErrorKind::GenericError(format!("Invalid destination URL: {}", dest)))?,
     );
